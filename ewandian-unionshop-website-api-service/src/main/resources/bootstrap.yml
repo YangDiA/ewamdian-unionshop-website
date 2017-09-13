@@ -1,0 +1,13 @@
+spring:
+    cloud:
+      config:
+        uri: ${spring.cloud.config.host:http://192.168.10.88:8888}
+        enabled: true
+        env: default
+    data:
+        mongodb:
+          database: ${crm.website.mongodb.database:website}
+          port: ${crm.website.mongodb.port:27017}
+          host: ${crm.website.mongodb.host:192.168.10.25}
+server:
+  port: ${crm.website.server.port:8000}

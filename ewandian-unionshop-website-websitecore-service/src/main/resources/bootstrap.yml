@@ -1,0 +1,13 @@
+spring:
+    cloud:
+      config:
+        uri: ${spring.cloud.config.host:http://192.168.10.88:8888}
+        enabled: true
+        env: default
+    data:
+        mongodb:
+          database: ${website.websitemaster.mongodb.database:website}
+          port: ${website.websitemaster.mongodb.port:27017}
+          host: ${website.websitemaster.mongodb.host:192.168.10.25}
+server:
+  port: ${website.websitemaster.server.port:9120}

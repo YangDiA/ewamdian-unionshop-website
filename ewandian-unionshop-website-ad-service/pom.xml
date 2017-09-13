@@ -1,0 +1,177 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>ewandian-unionshop-website</artifactId>
+        <groupId>com.ewandian.unionshop.microservice</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>ewandian-unionshop-website-ad-service</artifactId>
+    <packaging>jar</packaging>
+
+    <name>ewandian-unionshop-website-ad-service</name>
+    <url>http://maven.apache.org</url>
+
+    <properties>
+        <start-class>com.ewandian.unionshop.microservice.website.ad.AdApp</start-class>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <docker.repository.name>${docker.registry.name}/wonderful/${project.artifactId}</docker.repository.name>
+
+        <docker.port>8001</docker.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.netflix.hystrix</groupId>
+            <artifactId>hystrix-javanica</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ewandian.microservices.platform</groupId>
+            <artifactId>ewandian-microservices-platform</artifactId>
+
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.amqp</groupId>
+            <artifactId>spring-rabbit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-eureka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <!-- Testing starter -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.ewandian.unionshop.microservice.website</groupId>
+            <artifactId>ewandian-unionshop-website-common</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+
+
+    </dependencies>
+
+    <build>
+
+        <plugins>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>fabric8-maven-plugin</artifactId>
+                <version>${fabric8.version}</version>
+            </plugin>
+
+            <plugin>
+
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker.maven.plugin.version}</version>
+                <configuration>
+
+                    <registry>${docker.registry.name}</registry>
+                    <dockerHost>${docker.host.url}</dockerHost>
+                    <sourceDirectory>src/main/docker</sourceDirectory>
+                    <images>
+
+                        <image>
+
+                            <name>${docker.repository.name}:${project.version}</name>
+                            <alias>${project.artifactId}</alias>
+
+                            <build>
+                                <from>java:1.8.0_121_b13_jce</from>
+
+                                <maintainer>wonderful</maintainer>
+                                <assembly>
+                                    <descriptor>docker-assembly.xml</descriptor>
+                                </assembly>
+                                <ports>
+                                    <port>${docker.port}</port>
+                                </ports>
+                                <cmd>
+                                    <shell>RUN \cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime</shell>
+                                    <shell>java -Dspring.profiles.active="docker" -jar \
+                                        /maven/${project.build.finalName}.jar server \
+                                        /maven/docker-config.yml
+                                    </shell>
+                                </cmd>
+                            </build>
+                            <run>
+                                <namingStrategy>alias</namingStrategy>
+
+                                <ports>
+                                    <port>${docker.port}:8001</port>
+                                </ports>
+                                <volumes>
+                                    <bind>
+                                        <volume>${user.home}/logs:/logs</volume>
+                                    </bind>
+                                </volumes>
+                                <!-- <wait>
+                                     <url>http://${docker.host.address}:${docker.port}/v1/restaurants/1</url>
+                                     <time>500000</time>
+                                 </wait>-->
+                                <log>
+                                    <prefix>${project.artifactId}</prefix>
+                                    <color>cyan</color>
+                                </log>
+                            </run>
+                        </image>
+                    </images>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.19</version>
+                <configuration>
+                    <phase>integration-test</phase>
+                    <groups>com.ewandian.unionshop.microservice.website.news.AppTest</groups>
+                    <systemPropertyVariables>
+                        <service.url>http://${docker.host.address}:${docker.port}/</service.url>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <!--                            <goal>verify</goal>-->
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <excludedGroups>com.ewandian.unionshop.microservice.website.news.AppTest</excludedGroups>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
